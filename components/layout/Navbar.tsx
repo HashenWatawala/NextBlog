@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react' // icons
 export function Navbar({ children, className }: { children: ReactNode, className?: string }) {
     return (
         <nav className={clsx(
-            "px-4 py-3 bg-white border-b border-gray-200",
+            "sticky top-0 z-50 px-4 py-3 bg-white border-b border-gray-200",
             className
         )}>
             {children}
