@@ -2,28 +2,76 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, User, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { auth, db } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
-export default function AdminLogin() {
+export default function AdminSignup() {
     const [isLoading, setIsLoading] = useState(false);
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const router = useRouter();
+
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate login delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsLoading(false);
-        // Handle actual login logic here
+
+        try {
+            // 1) Create account in Firebase Auth
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+            // 2) Save display name in Auth profile
+            await updateProfile(cred.user, { displayName: name });
+
+            // 3) Save extra user data in Firestore
+            await setDoc(doc(db, "users", cred.user.uid), {
+                name,
+                email,
+                role: "admin",
+                createdAt: serverTimestamp(),
+            });
+
+            alert("Admin Account Created Successfully!");
+            router.push("/admin/dashboard");
+        } catch (err: any) {
+            console.error("Signup Error:", err);
+            alert(`Signup Failed: ${err.message}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleGoogleLogin = () => {
-        // Handle Google login logic here
-        console.log('Google login clicked');
-    };
+    const handleGoogleSignup = async () => {
+        setIsLoading(true);
 
+        try {
+            const provider = new GoogleAuthProvider();
+            const cred = await signInWithPopup(auth, provider);
+
+            // Create user doc if first time (safe to overwrite/merge too)
+            await setDoc(
+                doc(db, "users", cred.user.uid),
+                {
+                    name: cred.user.displayName ?? "",
+                    email: cred.user.email ?? "",
+                    role: "admin", // IMPORTANT: change this logic (see note below)
+                    createdAt: serverTimestamp(),
+                },
+                { merge: true }
+            );
+
+            router.push("/admin/dashboard");
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     return (
         <div className="w-full max-w-md p-6">
             <motion.div
@@ -34,15 +82,32 @@ export default function AdminLogin() {
             >
                 <div className="text-center mb-8">
                     <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <Lock size={24} />
+                        <UserPlus size={24} />
                     </div>
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Welcome Back</h1>
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Create Account</h1>
                     <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-sm">
-                        Sign in to access your admin dashboard
+                        Sign up to create your admin account
                     </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleSignup} className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Full Name
+                        </label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="John Doe"
+                                className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                                required
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Email Address
@@ -61,14 +126,9 @@ export default function AdminLogin() {
                     </div>
 
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Password
-                            </label>
-                            <a href="#" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                                Forgot password?
-                            </a>
-                        </div>
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Password
+                        </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                             <input
@@ -91,7 +151,7 @@ export default function AdminLogin() {
                             <Loader2 size={18} className="animate-spin" />
                         ) : (
                             <>
-                                Sign In
+                                Create Account
                                 <ArrowRight size={18} />
                             </>
                         )}
@@ -105,7 +165,7 @@ export default function AdminLogin() {
                 </div>
 
                 <button
-                    onClick={handleGoogleLogin}
+                    onClick={handleGoogleSignup}
                     className="w-full flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 py-2.5 rounded-xl transition-all font-medium text-sm"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -126,14 +186,14 @@ export default function AdminLogin() {
                             fill="#EA4335"
                         />
                     </svg>
-                    Sign in with Google
+                    Sign up with Google
                 </button>
             </motion.div>
 
             <p className="text-center mt-8 text-sm text-zinc-500 dark:text-zinc-400">
-                Don't have an account?{' '}
-                <Link href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                    Contact Administrator
+                Already have an account?{' '}
+                <Link href="/admin/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                    Sign in here
                 </Link>
             </p>
         </div>
