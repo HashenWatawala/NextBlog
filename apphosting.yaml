@@ -1,0 +1,31 @@
+kind: "AppHostingYaml"
+apiVersion: "v1"
+
+# The runtime to use for the app.
+# If not specified, the runtime will be automatically detected.
+# runtime: "nodejs20"
+
+# Environment variables that will be available during build and at runtime.
+# For sensitive values, use secrets instead of environment variables.
+environmentVariables:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyAS45MWuJ_EqKjwcmT5iFEXjhlHFEY1cjg"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "next-blog-d7967.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "next-blog-d7967"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "next-blog-d7967.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "1078559447476"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:1078559447476:web:233c186b14571c98377ae1"
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-9VWMY3SG7F"
+  - variable: NEXT_PUBLIC_FIREBASE_DATABASE_URL
+    value: "https://next-blog-d7967-default-rtdb.firebaseio.com"
+
+# Secrets that will be available during build and at runtime.
+# secrets:
+#   - variable: MY_SECRET
+#     secret: projects/my-project/secrets/my-secret/versions/latest
