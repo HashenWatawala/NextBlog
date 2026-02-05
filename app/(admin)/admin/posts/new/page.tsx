@@ -17,6 +17,9 @@ export default function CreatePost() {
     const [slug, setSlug] = useState('');
     const [content, setContent] = useState('');
     const [coverImage, setCoverImage] = useState<File | null>(null);
+    const [category, setCategory] = useState('Technology');
+    const [tags, setTags] = useState('');
+    const [excerpt, setExcerpt] = useState('');
 
     const [loading, setLoading] = useState(false);
 
@@ -50,6 +53,9 @@ export default function CreatePost() {
                 title: title.trim(),
                 slug: slug.trim(),
                 content,
+                category,
+                tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+                excerpt: excerpt.trim(),
                 status, // "draft" or "published"
                 author: {
                     uid: user.uid,
@@ -197,11 +203,16 @@ export default function CreatePost() {
                                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                     Category
                                 </label>
-                                <select className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                                >
                                     <option>Technology</option>
+                                    <option>Health</option>
+                                    <option>Lifestyle</option>
                                     <option>Design</option>
                                     <option>Development</option>
-                                    <option>Lifestyle</option>
                                 </select>
                             </div>
 
@@ -211,6 +222,8 @@ export default function CreatePost() {
                                 </label>
                                 <input
                                     type="text"
+                                    value={tags}
+                                    onChange={(e) => setTags(e.target.value)}
                                     placeholder="Add tags separated by comma..."
                                     className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
                                 />
@@ -222,6 +235,8 @@ export default function CreatePost() {
                                 </label>
                                 <textarea
                                     rows={3}
+                                    value={excerpt}
+                                    onChange={(e) => setExcerpt(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 resize-none text-sm"
                                     placeholder="Short description for SEO..."
                                 />
