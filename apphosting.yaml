@@ -3,7 +3,7 @@ apiVersion: "v1"
 
 # The runtime to use for the app.
 # If not specified, the runtime will be automatically detected.
-# runtime: "nodejs20"
+runtime: "nodejs20"
 
 # Environment variables that will be available during build and at runtime.
 # For sensitive values, use secrets instead of environment variables.
