@@ -1,8 +1,12 @@
 'use client';
 
 import { Bell, Menu, Search, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }) {
+    const { user, userData } = useAuth();
+
     return (
         <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30">
             <div className="flex items-center gap-4">
@@ -33,12 +37,26 @@ export default function AdminHeader({ onMenuClick }: { onMenuClick: () => void }
                 <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block"></div>
 
                 <div className="flex items-center gap-3 pl-1">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                        <User size={18} />
-                    </div>
+                    {user?.photoURL ? (
+                        <div className="w-9 h-9 rounded-full overflow-hidden shadow-lg">
+                            <Image
+                                src={user.photoURL}
+                                alt={user.displayName || 'User'}
+                                width={36}
+                                height={36}
+                                className="object-cover"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                            <User size={18} />
+                        </div>
+                    )}
                     <div className="hidden md:block text-sm">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">Admin User</p>
-                        <p className="text-xs text-zinc-500">admin@nextblog.com</p>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {userData?.name || user?.displayName || 'Admin User'}
+                        </p>
+                        <p className="text-xs text-zinc-500">{user?.email || 'admin@nextblog.com'}</p>
                     </div>
                 </div>
             </div>

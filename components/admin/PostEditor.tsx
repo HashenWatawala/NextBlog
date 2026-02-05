@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bold, Italic, Link as LinkIcon, List, Heading, Code, Eye, Edit2, Quote, Image as ImageIcon } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
+import { uploadPostImage } from '@/lib/uploadImage';
 
 interface PostEditorProps {
     content: string;
@@ -69,11 +70,40 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
         }
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const imageUrl = URL.createObjectURL(file);
-            insertText(`![${file.name}](${imageUrl})`);
+            try {
+                // Show a temporary loading placeholder
+                const tempId = `uploading-${Date.now()}`;
+                insertText(`![Uploading...]()`);
+
+                // Upload to Firebase Storage
+                const fileName = `editor-${Date.now()}`;
+                const imageUrl = await uploadPostImage(file, 'post_images', fileName);
+
+                // Replace the last inserted text (we'll just append for now to be safe, or we could do a real replacement)
+                // For simplicity in this editor, we'll just insert the real one
+                // Better approach: remove placeholder and insert real one
+
+                const textarea = textareaRef.current;
+                if (textarea) {
+                    const currentContent = textarea.value;
+                    const newContent = currentContent.replace('![Uploading...]()', `![${file.name}](${imageUrl})`);
+                    onChange(newContent);
+                }
+            } catch (error: any) {
+                console.error('Editor image upload failed:', error);
+                alert(`Failed to upload editor image: ${error.message}`);
+
+                // Clean up placeholder
+                const textarea = textareaRef.current;
+                if (textarea) {
+                    const currentContent = textarea.value;
+                    const newContent = currentContent.replace('![Uploading...]()', '');
+                    onChange(newContent);
+                }
+            }
         }
         // Reset input
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -109,8 +139,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
                     <button
                         onClick={() => setIsPreview(false)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${!isPreview
-                                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
+                            ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
                             }`}
                     >
                         <Edit2 size={16} />
@@ -119,8 +149,8 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
                     <button
                         onClick={() => setIsPreview(true)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${isPreview
-                                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
+                            ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
                             }`}
                     >
                         <Eye size={16} />
@@ -136,9 +166,20 @@ export default function PostEditor({ content, onChange }: PostEditorProps) {
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                                img: ({ node, ...props }) => (
-                                    <img {...props} className="rounded-lg max-w-full shadow-sm" />
-                                )
+                                img: ({ ...props }) => {
+                                    const src = typeof props.src === "string" ? props.src.trim() : "";
+
+                                    // If src is missing/empty, don't render an img at all
+                                    if (!src) return null;
+
+                                    return (
+                                        <img
+                                            {...props}
+                                            src={src}
+                                            className="rounded-lg max-w-full shadow-sm"
+                                        />
+                                    );
+                                },
                             }}
                         >
                             {content || '*No content yet...*'}

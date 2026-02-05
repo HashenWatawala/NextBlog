@@ -6,11 +6,19 @@ import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 import PostEditor from '@/components/admin/PostEditor';
 
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { uploadPostImage } from '@/lib/uploadImage';
+import { useAuth } from '@/context/AuthContext';
+
 export default function CreatePost() {
+    const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
     const [content, setContent] = useState('');
     const [coverImage, setCoverImage] = useState<File | null>(null);
+
+    const [loading, setLoading] = useState(false);
 
     // Auto-generate slug from title
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,6 +30,70 @@ export default function CreatePost() {
             .replace(/(^-|-$)+/g, '');
         setSlug(generatedSlug);
     };
+
+    async function savePost(status: 'draft' | 'published') {
+        if (!title.trim() || !slug.trim()) {
+            alert('Title and slug are required.');
+            return;
+        }
+
+        if (!user) {
+            alert('You must be logged in to publish a post.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            console.log('Starting save process...');
+            // 1) Create post document in Firestore
+            const postData = {
+                title: title.trim(),
+                slug: slug.trim(),
+                content,
+                status, // "draft" or "published"
+                author: {
+                    uid: user.uid,
+                    name: user.displayName || 'Anonymous',
+                    email: user.email,
+                    photoURL: user.photoURL
+                },
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+
+            console.log('Saving post metadata to Firestore...');
+            const docRef = await addDoc(collection(db, 'posts'), postData);
+            const postId = docRef.id;
+            console.log('Post created with ID:', postId);
+
+            // 2) Upload cover image (if any) and update document with URL
+            if (coverImage) {
+                console.log('Uploading cover image...');
+                const coverImageUrl = await uploadPostImage(coverImage, 'post_covers', postId);
+                console.log('Image uploaded successfully:', coverImageUrl);
+
+                console.log('Updating Firestore with image URL...');
+                await updateDoc(doc(db, 'posts', postId), {
+                    coverImageUrl,
+                    id: postId
+                });
+            } else {
+                await updateDoc(doc(db, 'posts', postId), {
+                    id: postId
+                });
+            }
+
+            console.log('Save process complete!');
+            alert(status === 'draft' ? 'Draft saved!' : 'Post published!');
+            // Optionally redirect after publish
+            // router.push('/admin/posts');
+        } catch (err: any) {
+            console.error('Save failed:', err);
+            alert(`Error: ${err.message || 'Failed to save post'}`);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <div className="max-w-5xl mx-auto pb-10">
@@ -41,15 +113,27 @@ export default function CreatePost() {
                 </div>
 
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium">
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => savePost('draft')}
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium disabled:opacity-60"
+                    >
                         <Save size={18} />
-                        <span>Save Draft</span>
+                        <span>{loading ? 'Saving...' : 'Save Draft'}</span>
                     </button>
-                    <button className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-600/20">
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => savePost('published')}
+                        className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-600/20 disabled:opacity-60"
+                    >
                         <Send size={18} />
-                        <span>Publish</span>
+                        <span>{loading ? 'Publishing...' : 'Publish'}</span>
                     </button>
                 </div>
+
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

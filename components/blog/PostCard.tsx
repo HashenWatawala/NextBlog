@@ -1,52 +1,52 @@
 import Link from "next/link"
 
+interface PostCardProps {
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+  date: string;
+  readTime?: string;
+}
+
 export default function PostCard({
   title,
   description,
   image,
   href,
   date,
-  badge = "Latest",
-}) {
+  readTime = "5 min read",
+}: PostCardProps) {
   return (
-    <div className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-      
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-full">
       {/* Image */}
-      <div className="overflow-hidden">
+      <div className="p-3">
         <img
           src={image}
           alt={title}
-          className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="h-56 w-full object-cover rounded-xl"
         />
       </div>
 
       {/* Content */}
-      <div className="p-5 flex flex-col justify-between h-full">
-        <div>
-          <span className="text-sm text-blue-600 font-semibold">
-            {badge}
-          </span>
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="text-xl font-bold text-gray-900 leading-tight">
+          {title}
+        </h3>
 
-          <h3 className="mt-2 text-lg font-bold text-gray-900 group-hover:text-blue-600 transition">
-            {title}
-          </h3>
+        <p className="mt-3 text-gray-600 text-sm line-clamp-2">
+          {description}
+        </p>
 
-          <p className="mt-2 text-gray-600 text-sm line-clamp-3">
-            {description}
-          </p>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-          <span>📅 {date}</span>
-
-          <Link
-            href={href}
-            className="text-blue-600 font-medium hover:underline"
-          >
-            Read →
-          </Link>
+        <div className="mt-auto pt-6 flex items-center justify-between text-xs font-medium text-gray-500">
+          <span>Published on {date}</span>
+          <span>{readTime}</span>
         </div>
       </div>
+
+      <Link href={href} className="absolute inset-0">
+        <span className="sr-only">View post</span>
+      </Link>
     </div>
   )
 }

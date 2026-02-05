@@ -37,10 +37,17 @@ export default function AdminLogin() {
 
             router.push("/admin/dashboard");
         } catch (err: any) {
-            alert(err.message);
+            console.error("Login Error Details:", err);
+            // Check for specific error codes if needed
+            if (err.code === "auth/invalid-credential") {
+                alert("Invalid email or password. Please check your credentials and ensure Email/Password provider is enabled in Firebase Console.");
+            } else {
+                alert(err.message);
+            }
         } finally {
             setIsLoading(false);
         }
+
     };
 
     const handleGoogleLogin = async () => {
