@@ -10,7 +10,8 @@ import {
     LogOut,
     Menu,
     Plus,
-    X
+    X,
+    Mail
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,6 +19,7 @@ import { motion, AnimatePresence } from 'motion/react';
 const sidebarItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Posts', href: '/admin/posts', icon: FileText },
+    { name: 'Messages', href: '/admin/messages', icon: Mail },
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
     { name: 'New Post', href: '/admin/posts/new', icon: Plus },
